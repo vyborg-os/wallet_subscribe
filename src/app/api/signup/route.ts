@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
+import { Prisma } from "@prisma/client";
 
 const bodySchema = z.object({
   name: z.string().min(2),
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await hash(password, 10);
-    const refCode = crypto.randomBytes(6).toString("hex");
+    let refCode = crypto.randomBytes(6).toString("hex");
 
     let referrerId: string | undefined;
     if (ref) {
@@ -34,14 +35,32 @@ export async function POST(req: Request) {
       if (referrer) referrerId = referrer.id;
     }
 
-    const user = await prisma.user.create({
-      data: { name, email, passwordHash, refCode, referrerId },
-      select: { id: true, email: true, name: true, refCode: true },
-    });
+    // Create user; in the rare case refCode collides, retry once with a new code
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: { name, email, passwordHash, refCode, referrerId },
+        select: { id: true, email: true, name: true, refCode: true },
+      });
+    } catch (e: any) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        // Unique constraint failed (likely refCode). Retry once.
+        refCode = crypto.randomBytes(6).toString("hex");
+        user = await prisma.user.create({
+          data: { name, email, passwordHash, refCode, referrerId },
+          select: { id: true, email: true, name: true, refCode: true },
+        });
+      } else {
+        throw e;
+      }
+    }
 
     return NextResponse.json({ user }, { status: 201 });
-  } catch (e) {
-    console.error(e);
+  } catch (e: any) {
+    console.error("/api/signup error:", e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json({ error: "Database error", code: e.code }, { status: 500 });
+    }
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
