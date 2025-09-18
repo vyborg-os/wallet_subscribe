@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import SubscribeButton from "@/components/subscribe-button";
 import { Crown, Clock, Wallet } from "lucide-react";

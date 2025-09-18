@@ -14,14 +14,14 @@ export default function Navbar() {
   const { data: session, status: sessionStatus } = useSession();
   const { isConnected } = useAccount();
 
-  const baseLinks: { href: Route; label: string; icon: JSX.Element }[] = [
+  const baseLinks = [
     { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
     { href: "/plans", label: "Plans", icon: <WalletIcon className="w-4 h-4" /> },
-  ];
-  const authedLinks: { href: Route; label: string; icon: JSX.Element }[] = [
+  ] satisfies { href: Route; label: string; icon: JSX.Element }[];
+  const authedLinks = [
     { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: "/affiliate", label: "Affiliate", icon: <Users className="w-4 h-4" /> },
-  ];
+  ] satisfies { href: Route; label: string; icon: JSX.Element }[];
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-white/5 border-b border-white/10">
@@ -30,8 +30,17 @@ export default function Navbar() {
           <span className="bg-gradient-to-r from-brand to-white bg-clip-text text-transparent">Wallet Subscribe</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6">
-          {[...baseLinks, ...(session ? (isConnected ? authedLinks : []) : [])].map((l) => (
-            <Link key={l.href} href={l.href} className={clsx("text-white/70 hover:text-white inline-flex items-center gap-2", pathname === l.href && "text-white font-semibold")}>{l.icon}<span>{l.label}</span></Link>
+          {baseLinks.map((l) => (
+            <Link key={l.href} href={l.href as Route} className={clsx("text-white/70 hover:text-white inline-flex items-center gap-2", pathname === l.href && "text-white font-semibold")}>
+              {l.icon}
+              <span>{l.label}</span>
+            </Link>
+          ))}
+          {session && isConnected && authedLinks.map((l) => (
+            <Link key={l.href} href={l.href as Route} className={clsx("text-white/70 hover:text-white inline-flex items-center gap-2", pathname === l.href && "text-white font-semibold")}>
+              {l.icon}
+              <span>{l.label}</span>
+            </Link>
           ))}
         </nav>
         <div className="flex items-center gap-3">

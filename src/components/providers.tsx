@@ -24,14 +24,11 @@ const wagmiConfig = projectId
       ssr: true,
     })
   : createConfig({
-      appName: process.env.NEXT_PUBLIC_APP_NAME || "Wallet Subscribe",
       chains: [sepolia],
       transports: {
         [sepolia.id]: http(rpcUrl),
       },
       connectors: [injected()],
-      autoConnect: true,
-      ssr: true,
     });
 
 export default function Providers({ children }: { children: ReactNode }) {
