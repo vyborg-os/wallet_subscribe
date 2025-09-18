@@ -7,17 +7,18 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import clsx from "clsx";
 import { useAccount } from "wagmi";
 import { LayoutDashboard, Users, Wallet as WalletIcon, Home } from "lucide-react";
+import type { Route } from "next";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status: sessionStatus } = useSession();
   const { isConnected } = useAccount();
 
-  const baseLinks = [
+  const baseLinks: { href: Route; label: string; icon: JSX.Element }[] = [
     { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
     { href: "/plans", label: "Plans", icon: <WalletIcon className="w-4 h-4" /> },
   ];
-  const authedLinks = [
+  const authedLinks: { href: Route; label: string; icon: JSX.Element }[] = [
     { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: "/affiliate", label: "Affiliate", icon: <Users className="w-4 h-4" /> },
   ];
