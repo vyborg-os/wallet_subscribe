@@ -26,7 +26,7 @@ body {
 }
 
 .card {
-  @apply rounded-2xl bg-[#151935]/90 backdrop-blur shadow-soft border border-white/5;
+  @apply rounded-2xl bg-[#151935]/90 backdrop-blur shadow-soft border border-white/5 overflow-hidden break-words;
 }
 
 .input {
@@ -35,6 +35,14 @@ body {
 
 .btn {
   @apply inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 font-semibold text-white shadow-soft hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition disabled:opacity-60 disabled:cursor-not-allowed;
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white/30 transition disabled:opacity-60 disabled:cursor-not-allowed;
+}
+
+.btn-sm {
+  @apply px-3 py-2 text-sm rounded-lg;
 }
 
 .link {
@@ -56,4 +64,21 @@ body {
 .card:hover {
   transform: translateY(-2px);
   transition: transform 150ms ease;
+}
+
+/* Media should shrink to fit */
+img, svg, canvas, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make long strings (errors, hashes) wrap inside cards */
+.break-words {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Tables should scroll horizontally on small screens */
+.table-wrap {
+  overflow-x: auto;
 }

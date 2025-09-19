@@ -1,14 +1,22 @@
-import { Shield, Wallet, Link as LinkIcon, Users } from "lucide-react";
+export const dynamic = "force-dynamic";
 
-export default function HomePage() {
+import { Shield, Wallet, Link as LinkIcon, Users } from "lucide-react";
+import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+export default async function HomePage() {
+  const session = await getServerSession(authOptions);
+  const ctaHref = session ? "/dashboard" : "/signup";
+  const ctaLabel = session ? "Go to Dashboard" : "Get Started";
   return (
     <div className="grid md:grid-cols-2 gap-8 items-center">
       <div>
         <h1 className="text-4xl md:text-5xl font-extrabold leading-tight gradient-text">Wallet‑native subscriptions that grow with you</h1>
         <p className="mt-4 text-white/80">Connect Trust Wallet, subscribe on-chain, and earn with a two-level affiliate program. Built with modern security and great UX.</p>
-        <div className="mt-8 flex gap-3">
-          <a href="/signup" className="btn">Get Started</a>
-          <a href="/plans" className="btn bg-white/10 hover:bg-white/20">View Plans</a>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href={ctaHref} className="btn">{ctaLabel}</Link>
+          <Link href="/plans" className="btn bg-white/10 hover:bg-white/20">View Plans</Link>
         </div>
       </div>
       <div className="card p-8 glow">

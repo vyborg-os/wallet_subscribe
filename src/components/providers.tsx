@@ -10,7 +10,8 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { SessionProvider } from "next-auth/react";
 import { injected } from "@wagmi/connectors";
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID as string | undefined;
+const rawProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID as string | undefined;
+const projectId = rawProjectId && rawProjectId !== "your-wc-project-id" ? rawProjectId : undefined;
 const rpcUrl = (process.env.NEXT_PUBLIC_RPC_URL as string | undefined) || "https://rpc.sepolia.org";
 
 const wagmiConfig = projectId
