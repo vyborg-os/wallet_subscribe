@@ -15,6 +15,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status: sessionStatus } = useSession();
   const { isConnected } = useAccount();
+  const isAdminPath = pathname?.startsWith("/admin");
 
   const baseLinks = [
     { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
@@ -26,6 +27,41 @@ export default function Navbar() {
     { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: "/affiliate", label: "Affiliate", icon: <Users className="w-4 h-4" /> },
   ] satisfies { href: Route; label: string; icon: JSX.Element }[];
+
+  if (isAdminPath) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0f1221]/80 backdrop-blur">
+        <div className="container flex items-center justify-between h-14">
+          <Link href="/admin" className="text-white font-semibold inline-flex items-center gap-2"><Shield className="w-4 h-4" /> Admin</Link>
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href={"/admin" as Route} className={clsx("text-white/70 hover:text-white", pathname === "/admin" && "text-white font-semibold")}>Dashboard</Link>
+            <Link href={"/admin/users" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/users") && "text-white font-semibold")}>Users</Link>
+            <Link href={"/admin/plans" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/plans") && "text-white font-semibold")}>Plans</Link>
+          </nav>
+          <div className="flex items-center gap-3 shrink-0">
+            {session ? (
+              <button className="btn" onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
+            ) : null}
+            <button className="md:hidden btn-outline" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
+              {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+        {open && (
+          <div className="md:hidden border-t border-white/10 bg-[#0f1221]/95 backdrop-blur">
+            <div className="container py-4 space-y-2">
+              <Link href={"/admin" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname === "/admin" && "text-white font-semibold bg-white/10")}>Dashboard</Link>
+              <Link href={"/admin/users" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname?.startsWith("/admin/users") && "text-white font-semibold bg-white/10")}>Users</Link>
+              <Link href={"/admin/plans" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname?.startsWith("/admin/plans") && "text-white font-semibold bg-white/10")}>Plans</Link>
+              {session && (
+                <button className="btn w-full" onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}>Logout</button>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-white/5 border-b border-white/10">

@@ -13,21 +13,24 @@ type Row = {
 };
 
 export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
+  const [rows, setRows] = useState<(Row & { newPassword?: string })[]>(initialRows);
   const [query, setQuery] = useState("");
   const [onlySubscribed, setOnlySubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const rows = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return initialRows.filter((r) => {
+    return rows.filter((r) => {
       const match = !q || r.email.toLowerCase().includes(q) || r.name.toLowerCase().includes(q);
       const subOk = !onlySubscribed || r.subscribed;
       return match && subOk;
     });
-  }, [initialRows, query, onlySubscribed]);
+  }, [rows, query, onlySubscribed]);
 
   const exportCsv = () => {
     const header = "email,name,subscribed,role,createdAt";
-    const body = rows.map((r) => `${r.email},${escapeCsv(r.name)},${r.subscribed ? "yes" : "no"},${r.role},${r.createdAt}`).join("\n");
+    const body = filtered.map((r) => `${r.email},${escapeCsv(r.name)},${r.subscribed ? "yes" : "no"},${r.role},${r.createdAt}`).join("\n");
     const blob = new Blob([header + "\n" + body], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -39,6 +42,39 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
     URL.revokeObjectURL(url);
   };
 
+  const onSave = async (u: Row & { newPassword?: string }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const payload: any = { name: u.name, role: u.role, walletAddress: u.wallet };
+      if (u.newPassword && u.newPassword.length >= 6) payload.password = u.newPassword;
+      const r = await fetch(`/api/admin/users/${u.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Failed to update user");
+      setRows((prev) => prev.map((x) => (x.id === u.id ? { ...x, newPassword: "" } : x)));
+    } catch (e: any) {
+      setError(e.message || "Failed to update");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDelete = async (id: string) => {
+    if (!confirm("Delete this user? Users with financial history cannot be deleted.")) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Failed to delete user");
+      setRows((prev) => prev.filter((x) => x.id !== id));
+    } catch (e: any) {
+      setError(e.message || "Failed to delete");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="card p-6">
       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -46,6 +82,7 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
         <label className="inline-flex items-center gap-2 text-white/80"><input type="checkbox" checked={onlySubscribed} onChange={(e) => setOnlySubscribed(e.target.checked)} /> Only subscribed</label>
         <div className="flex-1" />
         <button className="btn" onClick={exportCsv}>Export CSV</button>
+        {error && <span className="text-red-400 text-sm ml-3">{error}</span>}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
@@ -53,19 +90,35 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
             <tr className="text-left text-white/60">
               <th className="py-2 pr-4">Email</th>
               <th className="py-2 pr-4">Name</th>
+              <th className="py-2 pr-4">Wallet</th>
               <th className="py-2 pr-4">Subscribed</th>
               <th className="py-2 pr-4">Role</th>
+              <th className="py-2 pr-4">New Password</th>
               <th className="py-2 pr-4">Created</th>
+              <th className="py-2 pr-4" />
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {rows.map((r) => (
+            {filtered.map((r) => (
               <tr key={r.id}>
                 <td className="py-2 pr-4">{r.email}</td>
-                <td className="py-2 pr-4">{r.name}</td>
+                <td className="py-2 pr-4"><input className="input" value={r.name} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, name: e.target.value } : x))} /></td>
+                <td className="py-2 pr-4"><input className="input w-64" value={r.wallet} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, wallet: e.target.value } : x))} /></td>
                 <td className="py-2 pr-4">{r.subscribed ? "Yes" : "No"}</td>
-                <td className="py-2 pr-4">{r.role}</td>
+                <td className="py-2 pr-4">
+                  <select className="input" value={r.role} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, role: e.target.value as Row["role"] } : x))}>
+                    <option value="USER">USER</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                </td>
+                <td className="py-2 pr-4"><input type="password" className="input w-44" placeholder="Set new password" value={(r as any).newPassword || ""} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, newPassword: e.target.value } : x))} /></td>
                 <td className="py-2 pr-4">{new Date(r.createdAt).toLocaleString()}</td>
+                <td className="py-2 pr-4">
+                  <div className="flex gap-2">
+                    <button className="btn" onClick={() => onSave(r)} disabled={loading}>Save</button>
+                    <button className="btn-outline" onClick={() => onDelete(r.id)} disabled={loading}>Delete</button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
