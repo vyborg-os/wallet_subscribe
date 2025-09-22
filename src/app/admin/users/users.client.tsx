@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Save, Trash2 } from "lucide-react";
 
 type Row = {
   id: string;
@@ -115,8 +116,12 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
                 <td className="py-2 pr-4">{new Date(r.createdAt).toLocaleString()}</td>
                 <td className="py-2 pr-4">
                   <div className="flex gap-2">
-                    <button className="btn" onClick={() => onSave(r)} disabled={loading}>Save</button>
-                    <button className="btn-outline" onClick={() => onDelete(r.id)} disabled={loading}>Delete</button>
+                    <button className="btn px-3" title="Save" onClick={() => onSave(r)} disabled={loading}>
+                      <Save className="w-4 h-4" />
+                    </button>
+                    <button className="btn-outline px-3" title="Delete" onClick={() => onDelete(r.id)} disabled={loading}>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </td>
               </tr>

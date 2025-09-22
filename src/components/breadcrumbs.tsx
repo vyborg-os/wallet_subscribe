@@ -6,6 +6,7 @@ import { Home } from "lucide-react";
 
 export default function Breadcrumbs() {
   const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return null;
   const parts = pathname.split("/").filter(Boolean);
 
   // Build cumulative paths for each segment

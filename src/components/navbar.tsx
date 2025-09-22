@@ -16,6 +16,8 @@ export default function Navbar() {
   const { data: session, status: sessionStatus } = useSession();
   const { isConnected } = useAccount();
   const isAdminPath = pathname?.startsWith("/admin");
+  const isAdminLogin = pathname === "/admin/login";
+  const isAdminSession = !!(session && (session.user as any)?.role === "ADMIN");
 
   const baseLinks = [
     { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
@@ -33,29 +35,33 @@ export default function Navbar() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0f1221]/80 backdrop-blur">
         <div className="container flex items-center justify-between h-14">
           <Link href="/admin" className="text-white font-semibold inline-flex items-center gap-2"><Shield className="w-4 h-4" /> Admin</Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href={"/admin" as Route} className={clsx("text-white/70 hover:text-white", pathname === "/admin" && "text-white font-semibold")}>Dashboard</Link>
-            <Link href={"/admin/users" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/users") && "text-white font-semibold")}>Users</Link>
-            <Link href={"/admin/plans" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/plans") && "text-white font-semibold")}>Plans</Link>
-          </nav>
+          {isAdminSession && !isAdminLogin ? (
+            <nav className="hidden md:flex items-center gap-6">
+              <Link href={"/admin" as Route} className={clsx("text-white/70 hover:text-white", pathname === "/admin" && "text-white font-semibold")}>Dashboard</Link>
+              <Link href={"/admin/users" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/users") && "text-white font-semibold")}>Users</Link>
+              <Link href={"/admin/plans" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/plans") && "text-white font-semibold")}>Plans</Link>
+            </nav>
+          ) : (
+            <div />
+          )}
           <div className="flex items-center gap-3 shrink-0">
-            {session ? (
+            {isAdminSession && !isAdminLogin ? (
               <button className="btn" onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
             ) : null}
-            <button className="md:hidden btn-outline" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
-              {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {isAdminSession && !isAdminLogin ? (
+              <button className="md:hidden btn-outline" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
+                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            ) : null}
           </div>
         </div>
-        {open && (
+        {isAdminSession && !isAdminLogin && open && (
           <div className="md:hidden border-t border-white/10 bg-[#0f1221]/95 backdrop-blur">
             <div className="container py-4 space-y-2">
               <Link href={"/admin" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname === "/admin" && "text-white font-semibold bg-white/10")}>Dashboard</Link>
               <Link href={"/admin/users" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname?.startsWith("/admin/users") && "text-white font-semibold bg-white/10")}>Users</Link>
               <Link href={"/admin/plans" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname?.startsWith("/admin/plans") && "text-white font-semibold bg-white/10")}>Plans</Link>
-              {session && (
-                <button className="btn w-full" onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}>Logout</button>
-              )}
+              <button className="btn w-full" onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}>Logout</button>
             </div>
           </div>
         )}
