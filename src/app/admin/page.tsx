@@ -42,8 +42,7 @@ export default async function AdminDashboardPage() {
         <h3 className="font-semibold text-lg mb-3">Management</h3>
         <div className="flex flex-wrap gap-3">
           <Link className="btn" href="/admin/users">Users & Emails</Link>
-          <Link className="btn-outline" href="/leaderboard">Leaderboard</Link>
-          <Link className="btn-outline" href="/dashboard">Back to App</Link>
+          <Link className="btn-outline" href="/admin/leaderboard">Leaderboard</Link>
         </div>
       </div>
     </div>
