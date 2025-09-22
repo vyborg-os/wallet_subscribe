@@ -79,23 +79,23 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
   return (
     <div className="card p-6">
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <input className="input w-64" placeholder="Search email or name" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input className="input w-full sm:w-64" placeholder="Search email or name" value={query} onChange={(e) => setQuery(e.target.value)} />
         <label className="inline-flex items-center gap-2 text-white/80"><input type="checkbox" checked={onlySubscribed} onChange={(e) => setOnlySubscribed(e.target.checked)} /> Only subscribed</label>
         <div className="flex-1" />
         <button className="btn" onClick={exportCsv}>Export CSV</button>
         {error && <span className="text-red-400 text-sm ml-3">{error}</span>}
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-xs sm:text-sm">
           <thead>
             <tr className="text-left text-white/60">
               <th className="py-2 pr-4">Email</th>
               <th className="py-2 pr-4">Name</th>
-              <th className="py-2 pr-4">Wallet</th>
-              <th className="py-2 pr-4">Subscribed</th>
+              <th className="py-2 pr-4 hidden sm:table-cell">Wallet</th>
+              <th className="py-2 pr-4 hidden md:table-cell">Subscribed</th>
               <th className="py-2 pr-4">Role</th>
-              <th className="py-2 pr-4">New Password</th>
-              <th className="py-2 pr-4">Created</th>
+              <th className="py-2 pr-4 hidden md:table-cell">New Password</th>
+              <th className="py-2 pr-4 hidden lg:table-cell">Created</th>
               <th className="py-2 pr-4" />
             </tr>
           </thead>
@@ -103,17 +103,17 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
             {filtered.map((r) => (
               <tr key={r.id}>
                 <td className="py-2 pr-4">{r.email}</td>
-                <td className="py-2 pr-4"><input className="input" value={r.name} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, name: e.target.value } : x))} /></td>
-                <td className="py-2 pr-4"><input className="input w-64" value={r.wallet} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, wallet: e.target.value } : x))} /></td>
-                <td className="py-2 pr-4">{r.subscribed ? "Yes" : "No"}</td>
+                <td className="py-2 pr-4"><input className="input w-36 sm:w-52 md:w-64" value={r.name} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, name: e.target.value } : x))} /></td>
+                <td className="py-2 pr-4 hidden sm:table-cell"><input className="input w-40 sm:w-64" value={r.wallet} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, wallet: e.target.value } : x))} /></td>
+                <td className="py-2 pr-4 hidden md:table-cell">{r.subscribed ? "Yes" : "No"}</td>
                 <td className="py-2 pr-4">
                   <select className="input" value={r.role} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, role: e.target.value as Row["role"] } : x))}>
                     <option value="USER">USER</option>
                     <option value="ADMIN">ADMIN</option>
                   </select>
                 </td>
-                <td className="py-2 pr-4"><input type="password" className="input w-44" placeholder="Set new password" value={(r as any).newPassword || ""} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, newPassword: e.target.value } : x))} /></td>
-                <td className="py-2 pr-4">{new Date(r.createdAt).toLocaleString()}</td>
+                <td className="py-2 pr-4 hidden md:table-cell"><input type="password" className="input w-36 sm:w-44" placeholder="Set new password" value={(r as any).newPassword || ""} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, newPassword: e.target.value } : x))} /></td>
+                <td className="py-2 pr-4 hidden lg:table-cell">{new Date(r.createdAt).toLocaleString()}</td>
                 <td className="py-2 pr-4">
                   <div className="flex gap-2">
                     <button className="btn px-3" title="Save" onClick={() => onSave(r)} disabled={loading}>

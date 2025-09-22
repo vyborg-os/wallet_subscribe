@@ -8,9 +8,9 @@ import { hash } from "bcryptjs";
 export const dynamic = "force-dynamic";
 
 const patchSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
+  name: z.string().optional(),
   role: z.enum(["USER", "ADMIN"]).optional(),
-  walletAddress: z.string().min(1).optional(), // allow empty string to clear via custom logic
+  walletAddress: z.string().optional(),
   password: z.string().min(6).optional(),
 });
 
@@ -33,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   const data: any = {};
-  if (parsed.data.name !== undefined) data.name = parsed.data.name;
+  if (parsed.data.name !== undefined) data.name = parsed.data.name.trim() === "" ? null : parsed.data.name;
   if (parsed.data.role !== undefined) data.role = parsed.data.role;
   if (parsed.data.walletAddress !== undefined) data.walletAddress = parsed.data.walletAddress.trim() === "" ? null : parsed.data.walletAddress;
   if (parsed.data.password !== undefined) data.passwordHash = await hash(parsed.data.password, 10);
