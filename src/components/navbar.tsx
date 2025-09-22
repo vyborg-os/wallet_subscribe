@@ -6,7 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import clsx from "clsx";
 import { useAccount } from "wagmi";
-import { LayoutDashboard, Users, Wallet as WalletIcon, Home, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Wallet as WalletIcon, Home, Menu, X, Shield } from "lucide-react";
 import type { Route } from "next";
 import { useState } from "react";
 
@@ -46,6 +46,12 @@ export default function Navbar() {
               <span>{l.label}</span>
             </Link>
           ))}
+          {session && (session.user as any)?.role === "ADMIN" && (
+            <Link href={"/admin" as Route} className={clsx("text-white/70 hover:text-white inline-flex items-center gap-2", pathname === "/admin" && "text-white font-semibold")}>
+              <Shield className="w-4 h-4" />
+              <span>Admin</span>
+            </Link>
+          )}
         </nav>
         <div className="flex items-center gap-3 shrink-0">
           <ConnectButton chainStatus="icon" />
@@ -81,6 +87,11 @@ export default function Navbar() {
                 <span className="inline-flex items-center gap-2">{l.icon}<span>{l.label}</span></span>
               </Link>
             ))}
+            {session && (session.user as any)?.role === "ADMIN" && (
+              <Link href={"/admin" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname === "/admin" && "text-white font-semibold bg-white/10")}>
+                <span className="inline-flex items-center gap-2"><Shield className="w-4 h-4" /><span>Admin</span></span>
+              </Link>
+            )}
             <div className="pt-2 flex gap-2">
               {session ? (
                 <button className="btn w-full" onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>

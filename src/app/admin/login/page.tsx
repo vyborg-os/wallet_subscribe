@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
-import Link from "next/link";
-import { LogIn } from "lucide-react";
+import { Shield } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email(),
@@ -15,7 +14,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"credentials" | "otp">("credentials");
@@ -28,21 +27,20 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const r = await fetch("/api/auth/request-otp", {
+      const r = await fetch("/api/admin/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.email, password: data.password, purpose: "login" }),
+        body: JSON.stringify(data),
       });
+      setLoading(false);
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
-        setError(j.error || "Invalid email or password");
-        setLoading(false);
+        setError(j.error || "Invalid admin credentials");
         return;
       }
       setEmailCache(data.email);
       setPasswordCache(data.password);
       setStep("otp");
-      setLoading(false);
     } catch (e) {
       setError("Network error");
       setLoading(false);
@@ -60,7 +58,7 @@ export default function LoginPage() {
         setError("Invalid code");
         return;
       }
-      window.location.href = "/connect";
+      window.location.href = "/admin";
     } catch (e) {
       setError("Verification failed");
       setLoading(false);
@@ -71,12 +69,12 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md w-full card p-8">
       {step === "credentials" ? (
         <>
-          <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
-          <p className="text-white/70 mb-6">Login to continue</p>
+          <h1 className="text-2xl font-bold mb-2 inline-flex items-center gap-2"><Shield className="w-5 h-5 text-brand" /> Admin Login</h1>
+          <p className="text-white/70 mb-6">Enter your credentials to receive a one-time code</p>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm mb-1">Email</label>
-              <input className="input" placeholder="you@example.com" {...register("email")} />
+              <input className="input" placeholder="admin@example.com" {...register("email")} />
               {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
             <div>
@@ -85,13 +83,8 @@ export default function LoginPage() {
               {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>}
             </div>
             {error && <p className="text-red-400 text-sm">{error}</p>}
-            <button className="btn w-full" disabled={loading}>
-              <LogIn className="w-4 h-4 mr-2" /> Request Code
-            </button>
+            <button className="btn w-full" disabled={loading}>Request Code</button>
           </form>
-          <p className="text-sm text-white/70 mt-4">
-            Don't have an account? <Link className="link" href="/signup">Create one</Link>
-          </p>
         </>
       ) : (
         <>
@@ -107,7 +100,7 @@ export default function LoginPage() {
             onClick={async () => {
               setError(null);
               setLoading(true);
-              const r = await fetch("/api/auth/request-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailCache, password: passwordCache, purpose: "login" }) });
+              const r = await fetch("/api/admin/request-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailCache, password: passwordCache }) });
               setLoading(false);
               if (!r.ok) setError("Failed to resend code");
             }}

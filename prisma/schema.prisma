@@ -17,6 +17,7 @@ model User {
   referrer      User?    @relation("UserReferrals", fields: [referrerId], references: [id])
   referrals     User[]   @relation("UserReferrals")
   walletAddress String?
+  role          Role     @default(USER)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -26,6 +27,7 @@ model User {
   commissions   Commission[] @relation("CommissionBeneficiary") // commissions earned
   originatedCommissions Commission[] @relation("CommissionFromUser") // commissions generated from this user's purchases
   withdrawals   Withdrawal[]
+  otpCodes      OtpCode[]
 }
 
 model Plan {
@@ -113,4 +115,22 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  code      String
+  purpose   String // "signup" | "login"
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, purpose, consumed])
 }
