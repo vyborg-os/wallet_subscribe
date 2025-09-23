@@ -11,7 +11,9 @@ function haveSmtp() {
   return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_FROM);
 }
 
-export async function sendOtpEmail({ to, code, purpose }: OtpPayload) {
+export type SendResult = { ok: true; provider: "resend" | "smtp" | "dev" } | { ok: false; error: string };
+
+export async function sendOtpEmail({ to, code, purpose }: OtpPayload): Promise<SendResult> {
   const subject = `Your ${purpose === "login" ? "login" : "signup"} code`;
   const html = `
     <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
@@ -21,14 +23,28 @@ export async function sendOtpEmail({ to, code, purpose }: OtpPayload) {
       <p>This code expires in 10 minutes.</p>
     </div>
   `;
+  const text = `Your ${purpose} verification code is: ${code}\nThis code expires in 10 minutes.`;
 
-  const from = process.env.EMAIL_FROM || process.env.SMTP_FROM || "Acme <onboarding@resend.dev>";
+  // Build a proper From header: "Name <address>"
+  const rawFrom = process.env.EMAIL_FROM || process.env.SMTP_FROM || "onboarding@resend.dev";
+  const fromName = process.env.EMAIL_FROM_NAME || process.env.NEXT_PUBLIC_APP_NAME || "Wallet Subscribe";
+  const from = /</.test(rawFrom) ? rawFrom : `${fromName} <${rawFrom}>`;
 
   // Prefer Resend on Vercel (no SMTP required)
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from, to, subject, html });
-    return;
+    try {
+      const { error } = await resend.emails.send({ from, to, subject, html, text });
+      if (error) {
+        console.error("[email] Resend send error:", error);
+        // fall through to SMTP if configured
+      } else {
+        return { ok: true, provider: "resend" };
+      }
+    } catch (err) {
+      console.error("[email] Resend threw:", err);
+      // fall through to SMTP if configured
+    }
   }
 
   // Fallback to SMTP if configured
@@ -40,10 +56,14 @@ export async function sendOtpEmail({ to, code, purpose }: OtpPayload) {
       secure: Number(process.env.SMTP_PORT) === 465,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
-    await transporter.sendMail({ from, to, subject, html });
-    return;
+    await transporter.sendMail({ from, to, subject, html, text });
+    return { ok: true, provider: "smtp" };
   }
 
   // Dev fallback
   console.log(`[DEV] OTP for ${to} (${purpose}): ${code}`);
+  if (process.env.NODE_ENV !== "production") {
+    return { ok: true, provider: "dev" };
+  }
+  return { ok: false, error: "No email provider available" };
 }

@@ -25,9 +25,12 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     if (purpose === "login") {
-      if (!password || !user.passwordHash) return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
-      const ok = await compare(password, user.passwordHash);
-      if (!ok) return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
+      // If user has a password set, require it; otherwise allow passwordless OTP
+      if (user.passwordHash) {
+        if (!password) return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
+        const ok = await compare(password, user.passwordHash);
+        if (!ok) return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
+      }
     } else if (purpose === "signup") {
       // For signup, validate password too (the one just set during signup)
       if (!password || !user.passwordHash) return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
@@ -39,9 +42,12 @@ export async function POST(req: Request) {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await prisma.otpCode.create({ data: { userId: user.id, code, purpose, expiresAt } });
-    await sendOtpEmail({ to: user.email, code, purpose });
-
-    return NextResponse.json({ ok: true });
+    const send = await sendOtpEmail({ to: user.email, code, purpose });
+    if (!send.ok) {
+      console.error("/api/auth/request-otp send error:", send.error);
+      return NextResponse.json({ error: "Email send failed", detail: send.error }, { status: 502 });
+    }
+    return NextResponse.json({ ok: true, provider: send.provider });
   } catch (e) {
     console.error("/api/auth/request-otp error:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

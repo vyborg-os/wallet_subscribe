@@ -31,9 +31,12 @@ export async function POST(req: Request) {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await prisma.otpCode.create({ data: { userId: user.id, code, purpose: "login", expiresAt } });
-    await sendOtpEmail({ to: user.email, code, purpose: "login" });
-
-    return NextResponse.json({ ok: true });
+    const send = await sendOtpEmail({ to: user.email, code, purpose: "login" });
+    if (!send.ok) {
+      console.error("/api/admin/request-otp send error:", send.error);
+      return NextResponse.json({ error: "Email send failed", detail: send.error }, { status: 502 });
+    }
+    return NextResponse.json({ ok: true, provider: send.provider });
   } catch (e) {
     console.error("/api/admin/request-otp error:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
