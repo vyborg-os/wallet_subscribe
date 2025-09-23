@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { createPublicClient, http, parseEther, getAddress, isAddressEqual } from "viem";
-import { sepolia } from "wagmi/chains";
+import { createPublicClient, http, getAddress } from "viem";
+import { getAppConfig, toTokenUnits, addressTopic } from "@/lib/appConfig";
 
 const bodySchema = z.object({
   planId: z.string(),
@@ -27,26 +27,45 @@ export async function POST(req: Request) {
     const plan = await prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.active) return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
-    const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? process.env.RPC_URL;
-    const platformAddress = process.env.TREASURY_ADDRESS;
-    if (!rpcUrl || !platformAddress) {
+    const cfg = await getAppConfig();
+    const rpcUrl = cfg.rpcUrl;
+    const platformAddress = cfg.treasuryAddress;
+    const tokenAddress = cfg.tokenAddress;
+    const tokenDecimals = cfg.tokenDecimals ?? 6;
+    if (!rpcUrl || !platformAddress || !tokenAddress) {
       return NextResponse.json({ error: "Server not configured" }, { status: 500 });
     }
 
-    const publicClient = createPublicClient({ chain: sepolia, transport: http(rpcUrl) });
+    const publicClient = createPublicClient({ transport: http(rpcUrl) });
 
     const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` }).catch(() => null);
     if (!receipt || receipt.status !== "success") {
       return NextResponse.json({ error: "Transaction not confirmed" }, { status: 400 });
     }
 
-    const tx = await publicClient.getTransaction({ hash: txHash as `0x${string}` });
-
-    const toOk = tx.to ? isAddressEqual(getAddress(tx.to), getAddress(platformAddress as `0x${string}`)) : false;
-    const valueOk = tx.value === parseEther(plan.priceEth.toString());
-
-    if (!toOk || !valueOk) {
-      return NextResponse.json({ error: "Invalid transaction details" }, { status: 400 });
+    // Verify ERC20 Transfer(tokenAddress, from=user.walletAddress, to=platformAddress, value=plan.priceEth with decimals)
+    const token = getAddress(tokenAddress as `0x${string}`);
+    const toTopic = addressTopic(getAddress(platformAddress as `0x${string}`));
+    const me = await prisma.user.findUnique({ where: { id: userId }, select: { walletAddress: true } });
+    if (!me?.walletAddress) return NextResponse.json({ error: "User wallet not set" }, { status: 400 });
+    const fromTopic = addressTopic(getAddress(me.walletAddress as `0x${string}`));
+    const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" as const;
+    const expected = toTokenUnits(plan.priceEth.toString(), tokenDecimals);
+    const match = receipt.logs.find((log) => {
+      if (!log.address || log.address.toLowerCase() !== token.toLowerCase()) return false;
+      if (!log.topics || log.topics.length < 3) return false;
+      if ((log.topics[0] || '').toLowerCase() !== TRANSFER_TOPIC) return false;
+      const t1 = (log.topics[1] || '').toLowerCase();
+      const t2 = (log.topics[2] || '').toLowerCase();
+      if (t1 !== fromTopic.toLowerCase()) return false;
+      if (t2 !== toTopic.toLowerCase()) return false;
+      try {
+        const val = BigInt(log.data as `0x${string}`);
+        return val === expected;
+      } catch { return false; }
+    });
+    if (!match) {
+      return NextResponse.json({ error: "No matching token transfer to treasury found" }, { status: 400 });
     }
 
     const now = new Date();

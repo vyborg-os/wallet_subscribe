@@ -40,6 +40,7 @@ export default function Navbar() {
               <Link href={"/admin" as Route} className={clsx("text-white/70 hover:text-white", pathname === "/admin" && "text-white font-semibold")}>Dashboard</Link>
               <Link href={"/admin/users" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/users") && "text-white font-semibold")}>Users</Link>
               <Link href={"/admin/plans" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/plans") && "text-white font-semibold")}>Plans</Link>
+              <Link href={"/admin/settings" as Route} className={clsx("text-white/70 hover:text-white", pathname?.startsWith("/admin/settings") && "text-white font-semibold")}>Settings</Link>
             </nav>
           ) : (
             <div />
@@ -61,6 +62,7 @@ export default function Navbar() {
               <Link href={"/admin" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname === "/admin" && "text-white font-semibold bg-white/10")}>Dashboard</Link>
               <Link href={"/admin/users" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname?.startsWith("/admin/users") && "text-white font-semibold bg-white/10")}>Users</Link>
               <Link href={"/admin/plans" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname?.startsWith("/admin/plans") && "text-white font-semibold bg-white/10")}>Plans</Link>
+              <Link href={"/admin/settings" as Route} onClick={() => setOpen(false)} className={clsx("block px-2 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5", pathname?.startsWith("/admin/settings") && "text-white font-semibold bg-white/10")}>Settings</Link>
               <button className="btn w-full" onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}>Logout</button>
             </div>
           </div>

@@ -1,16 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { useAccount, useSendTransaction } from "wagmi";
-import { parseEther } from "viem";
+import { useEffect, useState } from "react";
+import { useAccount, useWriteContract } from "wagmi";
+import { parseUnits } from "viem";
 
 export default function SubscribeButton({ planId, priceEth }: { planId: string; priceEth: string }) {
   const { address, isConnected } = useAccount();
   const [status, setStatus] = useState<"idle" | "sending" | "confirming" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-  const { sendTransactionAsync } = useSendTransaction();
+  const { writeContractAsync } = useWriteContract();
+  const [cfg, setCfg] = useState<{ treasuryAddress: `0x${string}` | null; tokenAddress: `0x${string}` | null; tokenDecimals: number; currencySymbol: string } | null>(null);
 
-  const treasury = process.env.NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}` | undefined;
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/config", { cache: "no-store" });
+        const j = await r.json();
+        const c = j?.config;
+        setCfg({
+          treasuryAddress: c?.treasuryAddress ?? null,
+          tokenAddress: c?.tokenAddress ?? null,
+          tokenDecimals: c?.tokenDecimals ?? 6,
+          currencySymbol: c?.currencySymbol ?? "USDT",
+        });
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
 
   async function subscribe() {
     setError(null);
@@ -18,8 +35,8 @@ export default function SubscribeButton({ planId, priceEth }: { planId: string; 
       setError("Connect your wallet first");
       return;
     }
-    if (!treasury) {
-      setError("Treasury not configured");
+    if (!cfg?.treasuryAddress || !cfg?.tokenAddress) {
+      setError("Server not configured");
       return;
     }
     // Ensure user is logged in, otherwise redirect to login
@@ -32,9 +49,24 @@ export default function SubscribeButton({ planId, priceEth }: { planId: string; 
     } catch {}
     try {
       setStatus("sending");
-      const hash = await sendTransactionAsync({
-        to: treasury,
-        value: parseEther(priceEth),
+      // ERC20 transfer(to: treasury, value: plan amount in token units)
+      const value = parseUnits(priceEth, cfg.tokenDecimals);
+      const hash = await writeContractAsync({
+        address: cfg.tokenAddress,
+        abi: [
+          {
+            type: "function",
+            name: "transfer",
+            stateMutability: "nonpayable",
+            inputs: [
+              { name: "to", type: "address" },
+              { name: "value", type: "uint256" },
+            ],
+            outputs: [{ type: "bool" }],
+          },
+        ] as const,
+        functionName: "transfer",
+        args: [cfg.treasuryAddress, value],
       });
       setStatus("confirming");
       // Notify server to record subscription and compute commissions
@@ -55,7 +87,7 @@ export default function SubscribeButton({ planId, priceEth }: { planId: string; 
   return (
     <div className="space-y-2">
       <button className="btn w-full" onClick={subscribe} disabled={status === "sending" || status === "confirming"}>
-        {status === "sending" ? "Sending..." : status === "confirming" ? "Confirming..." : "Subscribe with Wallet"}
+        {status === "sending" ? "Sending..." : status === "confirming" ? "Confirming..." : `Subscribe with ${cfg?.currencySymbol ?? "USDT"}`}
       </button>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       {status === "done" && <p className="text-green-400 text-sm">Subscription recorded!</p>}

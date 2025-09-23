@@ -134,3 +134,16 @@ model OtpCode {
 
   @@index([userId, purpose, consumed])
 }
+
+model AppConfig {
+  id                 String   @id @default(cuid())
+  treasuryAddress    String?
+  leaderboardAddress String?
+  tokenAddress       String?
+  tokenDecimals      Int      @default(6)
+  currencySymbol     String   @default("USDT")
+  chainId            Int?
+  rpcUrl             String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

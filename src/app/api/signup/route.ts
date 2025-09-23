@@ -9,7 +9,7 @@ const bodySchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  ref: z.string().optional(),
+  ref: z.string().min(1, "Referral link required"),
 });
 
 export async function POST(req: Request) {
@@ -29,11 +29,12 @@ export async function POST(req: Request) {
     const passwordHash = await hash(password, 10);
     let refCode = crypto.randomBytes(6).toString("hex");
 
-    let referrerId: string | undefined;
-    if (ref) {
-      const referrer = await prisma.user.findUnique({ where: { refCode: ref } });
-      if (referrer) referrerId = referrer.id;
+    // Require a valid referral code
+    const referrer = await prisma.user.findUnique({ where: { refCode: ref } });
+    if (!referrer) {
+      return NextResponse.json({ error: "Invalid referral link" }, { status: 400 });
     }
+    const referrerId: string | undefined = referrer.id;
 
     // Create user; in the rare case refCode collides, retry once with a new code
     let user;

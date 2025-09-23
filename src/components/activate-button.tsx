@@ -1,17 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useAccount, useSendTransaction } from "wagmi";
-import { parseEther } from "viem";
+import { useEffect, useState } from "react";
+import { useAccount, useWriteContract } from "wagmi";
+import { parseUnits } from "viem";
 
 export default function ActivateButton({ label, usd }: { label: string; usd: number }) {
   const { address, isConnected } = useAccount();
-  const { sendTransactionAsync } = useSendTransaction();
+  const { writeContractAsync } = useWriteContract();
   const [status, setStatus] = useState<"idle" | "sending" | "confirming" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [cfg, setCfg] = useState<{ treasuryAddress: `0x${string}` | null; tokenAddress: `0x${string}` | null; tokenDecimals: number; currencySymbol: string } | null>(null);
 
-  const treasury = process.env.NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}` | undefined;
-  const USD_PER_ETH = Number(process.env.NEXT_PUBLIC_USD_PER_ETH || 3000);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/config", { cache: "no-store" });
+        const j = await r.json();
+        const c = j?.config;
+        setCfg({
+          treasuryAddress: c?.treasuryAddress ?? null,
+          tokenAddress: c?.tokenAddress ?? null,
+          tokenDecimals: c?.tokenDecimals ?? 6,
+          currencySymbol: c?.currencySymbol ?? "USDT",
+        });
+      } catch {}
+    })();
+  }, []);
 
   async function activate() {
     setError(null);
@@ -19,8 +33,8 @@ export default function ActivateButton({ label, usd }: { label: string; usd: num
       setError("Connect your wallet first");
       return;
     }
-    if (!treasury) {
-      setError("Treasury not configured");
+    if (!cfg?.treasuryAddress || !cfg?.tokenAddress) {
+      setError("Server not configured");
       return;
     }
 
@@ -33,20 +47,32 @@ export default function ActivateButton({ label, usd }: { label: string; usd: num
       }
     } catch {}
 
-    const eth = usd / USD_PER_ETH;
-    const ethStr = eth.toFixed(6); // 6 decimals precision is plenty for USD conversion
-
     try {
       setStatus("sending");
-      const hash = await sendTransactionAsync({
-        to: treasury,
-        value: parseEther(ethStr),
+      // For USDT, send 'usd' amount in token units
+      const value = parseUnits(String(usd), cfg.tokenDecimals);
+      const hash = await writeContractAsync({
+        address: cfg.tokenAddress,
+        abi: [
+          {
+            type: "function",
+            name: "transfer",
+            stateMutability: "nonpayable",
+            inputs: [
+              { name: "to", type: "address" },
+              { name: "value", type: "uint256" },
+            ],
+            outputs: [{ type: "bool" }],
+          },
+        ] as const,
+        functionName: "transfer",
+        args: [cfg.treasuryAddress, value],
       });
       setStatus("confirming");
       const res = await fetch("/api/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label, amountUsd: usd, amountEth: ethStr, txHash: hash }),
+        body: JSON.stringify({ label, amountUsd: usd, amountEth: String(usd), txHash: hash }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to record subscription");

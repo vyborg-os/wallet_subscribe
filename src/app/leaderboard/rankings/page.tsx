@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { Users } from "lucide-react";
 import LeaderboardClient from "./LeaderboardClient";
+import { getAppConfig } from "@/lib/appConfig";
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
@@ -28,7 +29,9 @@ export default async function RankingsPage() {
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
-  const USD_PER_ETH = Number(process.env.USD_PER_ETH || 3000);
+  const cfg = await getAppConfig();
+  const sym = (cfg.currencySymbol || "USDT").toUpperCase();
+  const USD_PER = sym === "USDT" ? 1 : Number(process.env.USD_PER_ETH || 3000);
 
   // Current month subscriptions and their sponsors (referrerId)
   const subs = await prisma.subscription.findMany({
@@ -66,8 +69,8 @@ export default async function RankingsPage() {
 
   const rows: LeaderRow[] = sponsorIds.map((id) => {
     const agg = bySponsor.get(id)!;
-    const directUsd = agg.volumeEth * USD_PER_ETH;
-    const l2Usd = (byL2.get(id) ?? 0) * USD_PER_ETH;
+    const directUsd = agg.volumeEth * USD_PER;
+    const l2Usd = (byL2.get(id) ?? 0) * USD_PER;
     const address = sponsorMap.get(id)?.walletAddress || id;
     return { id, address, refs: agg.userIds.size, volumeDirectUsd: directUsd, volumeTwoLevelUsd: directUsd + l2Usd };
   });

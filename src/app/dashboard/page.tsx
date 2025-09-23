@@ -9,6 +9,7 @@ import CommissionChart from "@/components/commission-chart";
 import QuickActions from "@/components/quick-actions";
 import WalletStatus from "@/components/wallet-status";
 import { Coins, CreditCard, TrendingUp, Wallet as WalletIcon, Users, BarChart3 } from "lucide-react";
+import { getAppConfig } from "@/lib/appConfig";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -45,6 +46,9 @@ export default async function DashboardPage() {
     prisma.user.count({ where: { referrerId: userId } }),
     prisma.subscription.findMany({ where: { createdAt: { gte: monthStart, lte: monthEnd } }, select: { amountEth: true } }),
   ]);
+
+  const cfg = await getAppConfig();
+  const sym = cfg.currencySymbol || "USDT";
 
   if (!user?.walletAddress) {
     redirect("/connect");
@@ -100,8 +104,8 @@ export default async function DashboardPage() {
             <Coins className="w-5 h-5 text-brand" />
             <h3 className="font-semibold text-lg">Commissions</h3>
           </div>
-          <p className="text-white/70 mt-2">Pending: <span className="font-semibold">{pending.toFixed(4)}</span> ETH</p>
-          <p className="text-white/70">Paid: <span className="font-semibold">{paid.toFixed(4)}</span> ETH</p>
+          <p className="text-white/70 mt-2">Pending: <span className="font-semibold">{pending.toFixed(4)}</span> {sym}</p>
+          <p className="text-white/70">Paid: <span className="font-semibold">{paid.toFixed(4)}</span> {sym}</p>
           <div className="mt-4 text-white/60 text-sm inline-flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Last 7 days overview</div>
         </div>
         <WalletCard />
@@ -120,15 +124,15 @@ export default async function DashboardPage() {
       <div className="grid md:grid-cols-4 gap-6">
         <div className="rounded-xl bg-white/5 border border-white/10 p-5">
           <div className="text-xs text-white/60">L1 Earnings (50%)</div>
-          <div className="text-2xl font-semibold mt-1">{l1Sum.toFixed(4)} ETH</div>
+          <div className="text-2xl font-semibold mt-1">{l1Sum.toFixed(4)} {sym}</div>
         </div>
         <div className="rounded-xl bg-white/5 border border-white/10 p-5">
           <div className="text-xs text-white/60">L2 Earnings (20%)</div>
-          <div className="text-2xl font-semibold mt-1">{l2Sum.toFixed(4)} ETH</div>
+          <div className="text-2xl font-semibold mt-1">{l2Sum.toFixed(4)} {sym}</div>
         </div>
         <div className="rounded-xl bg-white/5 border border-white/10 p-5">
           <div className="text-xs text-white/60">Pool Accrued (15%)</div>
-          <div className="text-2xl font-semibold mt-1">{poolAccrued.toFixed(4)} ETH</div>
+          <div className="text-2xl font-semibold mt-1">{poolAccrued.toFixed(4)} {sym}</div>
         </div>
         <div className="rounded-xl bg-white/5 border border-white/10 p-5">
           <div className="text-xs text-white/60">Referrals</div>
@@ -153,7 +157,7 @@ export default async function DashboardPage() {
               <div key={s.id} className="py-3 flex items-center justify-between">
                 <div>
                   <div className="font-semibold">{s.plan.name}</div>
-                  <div className="text-white/60 text-sm">{s.amountEth.toString()} ETH • Tx: {s.txHash.slice(0, 10)}...{s.txHash.slice(-6)}</div>
+                  <div className="text-white/60 text-sm">{s.amountEth.toString()} {sym} • Tx: {s.txHash.slice(0, 10)}...{s.txHash.slice(-6)}</div>
                 </div>
                 <div className="text-white/60 text-sm">Active until {new Date(s.endsAt).toLocaleDateString()}</div>
               </div>
@@ -182,8 +186,8 @@ export default async function DashboardPage() {
                   <tr key={c.id}>
                     <td className="py-2 pr-4">{new Date(c.createdAt).toLocaleString()}</td>
                     <td className="py-2 pr-4">L{c.level}</td>
-                    <td className="py-2 pr-4">{c.level === 1 ? Number(c.amountEth).toFixed(6) : "-"}</td>
-                    <td className="py-2 pr-4">{c.level === 2 ? Number(c.amountEth).toFixed(6) : "-"}</td>
+                    <td className="py-2 pr-4">{c.level === 1 ? `${Number(c.amountEth).toFixed(6)} ${sym}` : "-"}</td>
+                    <td className="py-2 pr-4">{c.level === 2 ? `${Number(c.amountEth).toFixed(6)} ${sym}` : "-"}</td>
                     <td className="py-2 pr-4">-</td>
                   </tr>
                 ))}

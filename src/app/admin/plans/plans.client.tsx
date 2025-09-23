@@ -95,7 +95,7 @@ export default function PlansClient({ initialPlans }: { initialPlans: Plan[] }) 
         <form onSubmit={onCreate} className="grid md:grid-cols-5 gap-3">
           <input className="input" required placeholder="Name" value={newPlan.name} onChange={(e) => setNewPlan({ ...newPlan, name: e.target.value })} />
           <input className="input md:col-span-2" required placeholder="Description" value={newPlan.description} onChange={(e) => setNewPlan({ ...newPlan, description: e.target.value })} />
-          <input className="input" required placeholder="Price (ETH)" value={newPlan.priceEth} onChange={(e) => setNewPlan({ ...newPlan, priceEth: e.target.value })} />
+          <input className="input" required placeholder="Price (USDT)" value={newPlan.priceEth} onChange={(e) => setNewPlan({ ...newPlan, priceEth: e.target.value })} />
           <input className="input" required type="number" min={1} placeholder="Duration days" value={newPlan.durationDays} onChange={(e) => setNewPlan({ ...newPlan, durationDays: Number(e.target.value) })} />
           <div className="md:col-span-5 flex items-center gap-3">
             <label className="inline-flex items-center gap-2 text-white/80"><input type="checkbox" checked={newPlan.active} onChange={(e) => setNewPlan({ ...newPlan, active: e.target.checked })} /> Active</label>
@@ -113,7 +113,7 @@ export default function PlansClient({ initialPlans }: { initialPlans: Plan[] }) 
               <tr className="text-left text-white/60">
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Description</th>
-                <th className="py-2 pr-4">Price (ETH)</th>
+                <th className="py-2 pr-4">Price (USDT)</th>
                 <th className="py-2 pr-4">Days</th>
                 <th className="py-2 pr-4">Active</th>
                 <th className="py-2 pr-4" />

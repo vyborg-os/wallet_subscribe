@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { hash } from "bcryptjs";
+import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -51,20 +52,34 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (auth.status !== 200) return NextResponse.json({ error: auth.status === 401 ? "Unauthorized" : "Forbidden" }, { status: auth.status });
 
   const id = params.id;
-  const [subs, wds, com1, com2] = await Promise.all([
+  const [subs, wds, com1, com2, referrals] = await Promise.all([
     prisma.subscription.count({ where: { userId: id } }),
     prisma.withdrawal.count({ where: { userId: id } }),
     prisma.commission.count({ where: { beneficiaryId: id } }),
     prisma.commission.count({ where: { fromUserId: id } }),
+    prisma.user.count({ where: { referrerId: id } }),
   ]);
   if (subs > 0 || wds > 0 || com1 > 0 || com2 > 0) {
-    return NextResponse.json({ error: "Cannot delete a user with financial history" }, { status: 400 });
+    return NextResponse.json({
+      error: "Cannot delete a user with financial history",
+      detail: { subscriptions: subs, withdrawals: wds, commissionsAsBeneficiary: com1, commissionsFromUser: com2, referrals },
+    }, { status: 400 });
   }
 
   try {
-    await prisma.user.delete({ where: { id } });
+    // Clean up dependent records that don't cascade (e.g., OTP codes)
+    await prisma.$transaction([
+      prisma.otpCode.deleteMany({ where: { userId: id } }),
+      // If this user is a referrer to others, detach them
+      prisma.user.updateMany({ where: { referrerId: id }, data: { referrerId: null } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
     return NextResponse.json({ ok: true });
   } catch (e) {
+    console.error("[admin] delete user error:", e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json({ error: "Failed to delete user", code: e.code }, { status: 400 });
+    }
     return NextResponse.json({ error: "Failed to delete user" }, { status: 400 });
   }
 }

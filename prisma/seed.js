@@ -42,6 +42,32 @@ async function main() {
   }
 
   console.log('Seeded plans');
+
+  // Seed AppConfig (only if none exists)
+  const existingCfg = await prisma.appConfig.findFirst();
+  if (!existingCfg) {
+    const treasury = process.env.TREASURY_ADDRESS || process.env.NEXT_PUBLIC_TREASURY_ADDRESS || null;
+    const rpcUrl = process.env.RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || null;
+    const tokenAddress = process.env.TOKEN_ADDRESS || process.env.NEXT_PUBLIC_TOKEN_ADDRESS || null;
+    const tokenDecimals = process.env.TOKEN_DECIMALS ? Number(process.env.TOKEN_DECIMALS) : 6;
+    const currencySymbol = process.env.CURRENCY_SYMBOL || 'USDT';
+    const chainId = process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : null;
+
+    await prisma.appConfig.create({
+      data: {
+        treasuryAddress: treasury,
+        leaderboardAddress: null,
+        tokenAddress: tokenAddress,
+        tokenDecimals,
+        currencySymbol,
+        chainId,
+        rpcUrl,
+      },
+    });
+    console.log('Seeded AppConfig');
+  } else {
+    console.log('AppConfig already present — skipping');
+  }
 }
 
 main()

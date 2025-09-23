@@ -67,7 +67,11 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
     try {
       const r = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Failed to delete user");
+      if (!r.ok) {
+        const detail = j && j.detail ? ` — ${JSON.stringify(j.detail)}` : "";
+        setError((j && j.error ? j.error : "Failed to delete user") + detail);
+        return;
+      }
       setRows((prev) => prev.filter((x) => x.id !== id));
     } catch (e: any) {
       setError(e.message || "Failed to delete");

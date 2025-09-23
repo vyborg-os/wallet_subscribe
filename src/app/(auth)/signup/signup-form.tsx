@@ -13,7 +13,7 @@ const schema = z.object({
   name: z.string().min(2, "Name is too short"),
   email: z.string().email(),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  ref: z.string().optional(),
+  ref: z.string().min(1, "Referral link required"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -111,7 +111,11 @@ export default function SignupForm() {
               <input type="password" className="input" placeholder="••••••••" {...register("password")} />
               {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>}
             </div>
-            <input type="hidden" {...register("ref")} />
+            <div>
+              <label className="block text-sm mb-1">Referral Code</label>
+              <input className="input" placeholder="Paste referral code from your invite link" {...register("ref")} />
+              {errors.ref && <p className="text-red-400 text-sm mt-1">{errors.ref.message}</p>}
+            </div>
             {error && <p className="text-red-400 text-sm">{error}</p>}
             <button className="btn w-full" disabled={loading}>
               <UserPlus className="w-4 h-4 mr-2" /> Create account

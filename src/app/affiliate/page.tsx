@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import ConnectionGuard from "@/components/connection-guard";
+import { getAppConfig } from "@/lib/appConfig";
 
 function absoluteUrl(path: string) {
   const base = process.env.NEXTAUTH_URL || "http://localhost:3000";
@@ -15,6 +16,8 @@ export default async function AffiliatePage() {
     return <div className="card p-6">You must be logged in.</div>;
   }
   const userId = (session.user as any).id as string;
+  const cfg = await getAppConfig();
+  const sym = cfg.currencySymbol || "USDT";
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { refCode: true, walletAddress: true } });
   if (!user?.walletAddress) {
@@ -54,12 +57,12 @@ export default async function AffiliatePage() {
         <div className="card p-6">
           <h3 className="font-semibold text-lg">Level 1 referrals</h3>
           <p className="text-3xl font-extrabold mt-2">{level1Ids.length}</p>
-          <p className="text-white/70">Earnings: {level1Sum} ETH</p>
+          <p className="text-white/70">Earnings: {level1Sum} {sym}</p>
         </div>
         <div className="card p-6">
           <h3 className="font-semibold text-lg">Level 2 referrals</h3>
           <p className="text-3xl font-extrabold mt-2">{level2Count}</p>
-          <p className="text-white/70">Earnings: {level2Sum} ETH</p>
+          <p className="text-white/70">Earnings: {level2Sum} {sym}</p>
         </div>
         <div className="card p-6">
           <h3 className="font-semibold text-lg">How it works</h3>
