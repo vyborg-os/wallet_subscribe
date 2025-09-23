@@ -81,4 +81,5 @@ img, svg, canvas, video {
 /* Tables should scroll horizontally on small screens */
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

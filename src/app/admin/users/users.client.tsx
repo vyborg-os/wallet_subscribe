@@ -85,42 +85,42 @@ export default function UsersClient({ initialRows }: { initialRows: Row[] }) {
         <button className="btn" onClick={exportCsv}>Export CSV</button>
         {error && <span className="text-red-400 text-sm ml-3">{error}</span>}
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-xs sm:text-sm">
+      <div className="table-wrap">
+        <table className="min-w-[980px] w-full text-sm">
           <thead>
-            <tr className="text-left text-white/60">
-              <th className="py-2 pr-4">Email</th>
-              <th className="py-2 pr-4">Name</th>
-              <th className="py-2 pr-4 hidden sm:table-cell">Wallet</th>
-              <th className="py-2 pr-4 hidden md:table-cell">Subscribed</th>
-              <th className="py-2 pr-4">Role</th>
-              <th className="py-2 pr-4 hidden md:table-cell">New Password</th>
-              <th className="py-2 pr-4 hidden lg:table-cell">Created</th>
-              <th className="py-2 pr-4" />
+            <tr className="text-left text-white/60 whitespace-nowrap">
+              <th className="py-2 pr-4 min-w-[220px]">Email</th>
+              <th className="py-2 pr-4 min-w-[180px]">Name</th>
+              <th className="py-2 pr-4 min-w-[260px]">Wallet</th>
+              <th className="py-2 pr-4 min-w-[130px]">Subscribed</th>
+              <th className="py-2 pr-4 min-w-[120px]">Role</th>
+              <th className="py-2 pr-4 min-w-[200px]">New Password</th>
+              <th className="py-2 pr-4 min-w-[200px]">Created</th>
+              <th className="py-2 pr-4 min-w-[120px]" />
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
             {filtered.map((r) => (
               <tr key={r.id}>
-                <td className="py-2 pr-4">{r.email}</td>
-                <td className="py-2 pr-4"><input className="input w-36 sm:w-52 md:w-64" value={r.name} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, name: e.target.value } : x))} /></td>
-                <td className="py-2 pr-4 hidden sm:table-cell"><input className="input w-40 sm:w-64" value={r.wallet} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, wallet: e.target.value } : x))} /></td>
-                <td className="py-2 pr-4 hidden md:table-cell">{r.subscribed ? "Yes" : "No"}</td>
+                <td className="py-2 pr-4 whitespace-nowrap">{r.email}</td>
+                <td className="py-2 pr-4"><input className="input w-full" value={r.name} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, name: e.target.value } : x))} /></td>
+                <td className="py-2 pr-4"><input className="input w-full font-mono" value={r.wallet} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, wallet: e.target.value } : x))} /></td>
+                <td className="py-2 pr-4">{r.subscribed ? "Yes" : "No"}</td>
                 <td className="py-2 pr-4">
                   <select className="input" value={r.role} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, role: e.target.value as Row["role"] } : x))}>
                     <option value="USER">USER</option>
                     <option value="ADMIN">ADMIN</option>
                   </select>
                 </td>
-                <td className="py-2 pr-4 hidden md:table-cell"><input type="password" className="input w-36 sm:w-44" placeholder="Set new password" value={(r as any).newPassword || ""} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, newPassword: e.target.value } : x))} /></td>
-                <td className="py-2 pr-4 hidden lg:table-cell">{new Date(r.createdAt).toLocaleString()}</td>
+                <td className="py-2 pr-4"><input type="password" className="input w-full" placeholder="Set new password" value={(r as any).newPassword || ""} onChange={(e) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, newPassword: e.target.value } : x))} /></td>
+                <td className="py-2 pr-4 whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
                 <td className="py-2 pr-4">
                   <div className="flex gap-2">
-                    <button className="btn px-3" title="Save" onClick={() => onSave(r)} disabled={loading}>
-                      <Save className="w-4 h-4" />
+                    <button className="btn px-3" aria-label="Save" title="Save" onClick={() => onSave(r)} disabled={loading}>
+                      <Save className="w-4 h-4 text-white" />
                     </button>
-                    <button className="btn-outline px-3" title="Delete" onClick={() => onDelete(r.id)} disabled={loading}>
-                      <Trash2 className="w-4 h-4" />
+                    <button className="btn-outline px-3" aria-label="Delete" title="Delete" onClick={() => onDelete(r.id)} disabled={loading}>
+                      <Trash2 className="w-4 h-4 text-white" />
                     </button>
                   </div>
                 </td>
