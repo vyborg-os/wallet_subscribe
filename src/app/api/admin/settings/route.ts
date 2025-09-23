@@ -7,13 +7,13 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  treasuryAddress: z.string().optional(),
-  leaderboardAddress: z.string().optional(),
-  tokenAddress: z.string().optional(),
-  tokenDecimals: z.number().int().min(0).max(36).optional(),
-  currencySymbol: z.string().min(1).max(10).optional(),
-  chainId: z.number().int().optional(),
-  rpcUrl: z.string().url().optional(),
+  treasuryAddress: z.string().nullable().optional(),
+  leaderboardAddress: z.string().nullable().optional(),
+  tokenAddress: z.string().nullable().optional(),
+  tokenDecimals: z.number().int().min(0).max(36).nullable().optional(),
+  currencySymbol: z.string().min(1).max(10).nullable().optional(),
+  chainId: z.number().int().nullable().optional(),
+  rpcUrl: z.string().url().nullable().optional(),
 });
 
 async function requireAdmin() {
