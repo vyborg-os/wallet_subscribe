@@ -9,10 +9,12 @@ import { RainbowKitProvider, getDefaultConfig, darkTheme } from "@rainbow-me/rai
 import "@rainbow-me/rainbowkit/styles.css";
 import { SessionProvider } from "next-auth/react";
 import { injected } from "@wagmi/connectors";
+import InAppAutoConnect from "./inapp-auto-connect";
 
 const rawProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID as string | undefined;
 const projectId = rawProjectId && rawProjectId !== "your-wc-project-id" ? rawProjectId : undefined;
-const rpcUrl = (process.env.NEXT_PUBLIC_RPC_URL as string | undefined) || "https://rpc.sepolia.org";
+const envRpc = process.env.NEXT_PUBLIC_RPC_URL as string | undefined;
+const rpcUrl = envRpc && !envRpc.includes("YOUR_KEY") ? envRpc : "https://rpc.sepolia.org";
 
 const wagmiConfig = projectId
   ? getDefaultConfig({
@@ -29,7 +31,8 @@ const wagmiConfig = projectId
       transports: {
         [sepolia.id]: http(rpcUrl),
       },
-      connectors: [injected()],
+      connectors: [injected({ shimDisconnect: true })],
+      ssr: true,
     });
 
 export default function Providers({ children }: { children: ReactNode }) {
@@ -39,6 +42,7 @@ export default function Providers({ children }: { children: ReactNode }) {
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider theme={darkTheme({ accentColor: "#6C5CE7" })}>
+            <InAppAutoConnect />
             {children}
           </RainbowKitProvider>
         </QueryClientProvider>
