@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import SmartConnectButton from "@/components/smart-connect-button";
 import clsx from "clsx";
 import { useAccount } from "wagmi";
 import { LayoutDashboard, Users, Wallet as WalletIcon, Home, Menu, X, Shield } from "lucide-react";
@@ -98,7 +98,7 @@ export default function Navbar() {
           )}
         </nav>
         <div className="flex items-center gap-3 shrink-0">
-          <ConnectButton chainStatus="icon" />
+          <SmartConnectButton />
           {session ? (
             <>
               {!isConnected && (
