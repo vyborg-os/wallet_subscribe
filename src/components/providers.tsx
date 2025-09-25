@@ -35,7 +35,7 @@ const wagmiConfig = projectId
       },
       connectors: [
         // Explicitly include MetaMask and Coinbase connectors in addition to generic injected.
-        metaMask({ shimDisconnect: true }),
+        metaMask(),
         coinbaseWallet({ appName: process.env.NEXT_PUBLIC_APP_NAME || "Wallet Subscribe" }),
         injected({ shimDisconnect: true }),
       ],
