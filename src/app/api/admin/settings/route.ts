@@ -45,7 +45,19 @@ export async function PATCH(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   const existing = await prisma.appConfig.findFirst();
-  const data = parsed.data;
+  const raw = parsed.data;
+  // Build Prisma-safe data: allow nulls for nullable columns, but omit nulls on non-nullable ones
+  const data: any = {
+    // Nullable columns — allow null to clear
+    treasuryAddress: raw.treasuryAddress ?? undefined,
+    leaderboardAddress: raw.leaderboardAddress ?? undefined,
+    tokenAddress: raw.tokenAddress ?? undefined,
+    chainId: raw.chainId ?? undefined,
+    rpcUrl: raw.rpcUrl ?? undefined,
+  };
+  if (raw.tokenDecimals !== null && raw.tokenDecimals !== undefined) data.tokenDecimals = raw.tokenDecimals;
+  if (raw.currencySymbol !== null && raw.currencySymbol !== undefined) data.currencySymbol = raw.currencySymbol.toUpperCase();
+
   const cfg = existing
     ? await prisma.appConfig.update({ where: { id: existing.id }, data })
     : await prisma.appConfig.create({ data });
