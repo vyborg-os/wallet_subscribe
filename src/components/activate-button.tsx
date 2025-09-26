@@ -29,6 +29,10 @@ export default function ActivateButton({ label, usd }: { label: string; usd: num
 
   async function activate() {
     setError(null);
+    if (!usd || usd <= 0) {
+      setError("Select a valid quantity");
+      return;
+    }
     if (!isConnected || !address) {
       setError("Connect your wallet first");
       return;
@@ -51,6 +55,11 @@ export default function ActivateButton({ label, usd }: { label: string; usd: num
       setStatus("sending");
       // For USDT, send 'usd' amount in token units
       const value = parseUnits(String(usd), cfg.tokenDecimals);
+      if (value === BigInt(0)) {
+        setStatus("idle");
+        setError("Amount is zero");
+        return;
+      }
       const hash = await writeContractAsync({
         address: cfg.tokenAddress,
         abi: [
@@ -86,7 +95,11 @@ export default function ActivateButton({ label, usd }: { label: string; usd: num
   return (
     <div className="space-y-2">
       <button className="btn w-full" onClick={activate} disabled={status === "sending" || status === "confirming"}>
-        {status === "sending" ? "Sending..." : status === "confirming" ? "Confirming..." : "Activate"}
+        {status === "sending"
+          ? "Sending..."
+          : status === "confirming"
+          ? "Confirming..."
+          : `Activate — Send ${usd.toFixed(2)} ${cfg?.currencySymbol ?? "USDT"}`}
       </button>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       {status === "done" && <p className="text-green-400 text-sm">Activation recorded!</p>}

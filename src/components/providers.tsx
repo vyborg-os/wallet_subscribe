@@ -48,7 +48,7 @@ export default function Providers({ children }: { children: ReactNode }) {
     <SessionProvider>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider theme={darkTheme({ accentColor: "#6C5CE7" })} initialChain={sepolia}>
+          <RainbowKitProvider theme={darkTheme({ accentColor: "#6C5CE7" })}>
             <InAppAutoConnect />
             {children}
           </RainbowKitProvider>

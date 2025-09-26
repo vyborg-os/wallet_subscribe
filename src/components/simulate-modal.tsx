@@ -29,7 +29,16 @@ export default function SimulateModal({ open, onClose, name, usd, l1, l2 }: { op
         <div className="space-y-3">
           <div>
             <label className="block text-sm mb-1">Quantity</label>
-            <input className="input" type="number" min={1} value={qty} onChange={(e) => setQty(parseInt(e.target.value || "1"))} />
+            <input
+              className="input"
+              type="number"
+              min={1}
+              value={qty}
+              onChange={(e) => {
+                const v = parseInt(e.target.value || "1", 10);
+                setQty(Number.isFinite(v) ? Math.max(1, v) : 1);
+              }}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-white/5 border border-white/10 p-3">
