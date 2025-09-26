@@ -18,10 +18,16 @@ export default async function AdminSettingsPage() {
     cfg = await prisma.appConfig.create({ data: {} });
   }
 
+  const initial = {
+    ...cfg,
+    level1Bps: (cfg as any)?.level1Bps ?? Number(process.env.LEVEL1_BPS ?? 1000),
+    level2Bps: (cfg as any)?.level2Bps ?? Number(process.env.LEVEL2_BPS ?? 500),
+  } as any;
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>
-      <SettingsClient initial={cfg} />
+      <SettingsClient initial={initial} />
     </div>
   );
 }

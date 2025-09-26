@@ -142,6 +142,8 @@ model AppConfig {
   tokenAddress       String?
   tokenDecimals      Int      @default(6)
   currencySymbol     String   @default("USDT")
+  level1Bps          Int      @default(1000) // 10%
+  level2Bps          Int      @default(500)  // 5%
   chainId            Int?
   rpcUrl             String?
   createdAt          DateTime @default(now())

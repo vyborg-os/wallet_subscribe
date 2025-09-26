@@ -83,9 +83,10 @@ export async function POST(req: Request) {
       },
     });
 
-    // Two-level affiliate commissions
-    const LEVEL1_BPS = Number(process.env.LEVEL1_BPS ?? 1000); // 10%
-    const LEVEL2_BPS = Number(process.env.LEVEL2_BPS ?? 500); // 5%
+    // Two-level affiliate commissions (from AppConfig)
+    const cfgBps = await getAppConfig();
+    const LEVEL1_BPS = cfgBps.level1Bps; // 10% default
+    const LEVEL2_BPS = cfgBps.level2Bps; // 5% default
 
     const buyer = await prisma.user.findUnique({ where: { id: userId } });
     if (buyer?.referrerId) {

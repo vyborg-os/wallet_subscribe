@@ -12,6 +12,8 @@ const schema = z.object({
   tokenAddress: z.string().nullable().optional(),
   tokenDecimals: z.number().int().min(0).max(36).nullable().optional(),
   currencySymbol: z.string().min(1).max(10).nullable().optional(),
+  level1Bps: z.number().int().min(0).max(10000).nullable().optional(),
+  level2Bps: z.number().int().min(0).max(10000).nullable().optional(),
   chainId: z.number().int().nullable().optional(),
   rpcUrl: z.string().url().nullable().optional(),
 });
@@ -57,6 +59,8 @@ export async function PATCH(req: Request) {
   };
   if (raw.tokenDecimals !== null && raw.tokenDecimals !== undefined) data.tokenDecimals = raw.tokenDecimals;
   if (raw.currencySymbol !== null && raw.currencySymbol !== undefined) data.currencySymbol = raw.currencySymbol.toUpperCase();
+  if (raw.level1Bps !== null && raw.level1Bps !== undefined) data.level1Bps = raw.level1Bps;
+  if (raw.level2Bps !== null && raw.level2Bps !== undefined) data.level2Bps = raw.level2Bps;
 
   const cfg = existing
     ? await prisma.appConfig.update({ where: { id: existing.id }, data })

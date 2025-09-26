@@ -9,6 +9,8 @@ type Config = {
   tokenAddress: string | null;
   tokenDecimals: number;
   currencySymbol: string;
+  level1Bps: number;
+  level2Bps: number;
   chainId: number | null;
   rpcUrl: string | null;
 };
@@ -33,6 +35,8 @@ export default function SettingsClient({ initial }: { initial: Config }) {
           tokenAddress: emptyToNull(cfg.tokenAddress),
           tokenDecimals: cfg.tokenDecimals,
           currencySymbol: cfg.currencySymbol,
+          level1Bps: cfg.level1Bps,
+          level2Bps: cfg.level2Bps,
           chainId: cfg.chainId,
           rpcUrl: emptyToNull(cfg.rpcUrl),
         }),
@@ -71,6 +75,38 @@ export default function SettingsClient({ initial }: { initial: Config }) {
         <div>
           <label className="block text-sm mb-1">Currency Symbol</label>
           <input className="input" placeholder="USDT" value={cfg.currencySymbol} onChange={(e) => setCfg({ ...cfg, currencySymbol: e.target.value })} />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Level 1 Commission (%)</label>
+          <input
+            className="input"
+            type="number"
+            min={0}
+            max={100}
+            step={0.01}
+            value={(cfg.level1Bps ?? 0) / 100}
+            onChange={(e) => {
+              const pct = Number(e.target.value || 0);
+              const bps = Math.max(0, Math.min(10000, Math.round(pct * 100)));
+              setCfg({ ...cfg, level1Bps: bps });
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Level 2 Commission (%)</label>
+          <input
+            className="input"
+            type="number"
+            min={0}
+            max={100}
+            step={0.01}
+            value={(cfg.level2Bps ?? 0) / 100}
+            onChange={(e) => {
+              const pct = Number(e.target.value || 0);
+              const bps = Math.max(0, Math.min(10000, Math.round(pct * 100)));
+              setCfg({ ...cfg, level2Bps: bps });
+            }}
+          />
         </div>
         <div>
           <label className="block text-sm mb-1">RPC URL</label>

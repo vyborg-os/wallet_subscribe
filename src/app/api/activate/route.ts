@@ -95,8 +95,8 @@ export async function POST(req: Request) {
     });
 
     // Two-level affiliate commissions (in token units)
-    const LEVEL1_BPS = Number(process.env.LEVEL1_BPS ?? 1000);
-    const LEVEL2_BPS = Number(process.env.LEVEL2_BPS ?? 500);
+    const LEVEL1_BPS = cfg.level1Bps;
+    const LEVEL2_BPS = cfg.level2Bps;
     const amt = Number(amountEth);
     const l1Amt = (amt * LEVEL1_BPS) / 10000;
     const l2Amt = (amt * LEVEL2_BPS) / 10000;

@@ -6,6 +6,8 @@ export type AppConfigShape = {
   tokenAddress: string | null;
   tokenDecimals: number;
   currencySymbol: string;
+  level1Bps: number;
+  level2Bps: number;
   chainId: number | null;
   rpcUrl: string | null;
 };
@@ -18,6 +20,8 @@ export async function getAppConfig(): Promise<AppConfigShape> {
     tokenAddress: cfg?.tokenAddress ?? null,
     tokenDecimals: cfg?.tokenDecimals ?? 6,
     currencySymbol: cfg?.currencySymbol ?? "USDT",
+    level1Bps: (cfg as any)?.level1Bps ?? Number(process.env.LEVEL1_BPS ?? 1000),
+    level2Bps: (cfg as any)?.level2Bps ?? Number(process.env.LEVEL2_BPS ?? 500),
     chainId: cfg?.chainId ?? null,
     rpcUrl: cfg?.rpcUrl ?? process.env.NEXT_PUBLIC_RPC_URL ?? process.env.RPC_URL ?? null,
   };
