@@ -8,8 +8,10 @@ export type AppConfigShape = {
   currencySymbol: string;
   level1Bps: number;
   level2Bps: number;
+  paymentNetwork: "EVM" | "TRON";
   chainId: number | null;
   rpcUrl: string | null;
+  tronApiKey: string | null;
 };
 
 export async function getAppConfig(): Promise<AppConfigShape> {
@@ -22,8 +24,10 @@ export async function getAppConfig(): Promise<AppConfigShape> {
     currencySymbol: cfg?.currencySymbol ?? "USDT",
     level1Bps: (cfg as any)?.level1Bps ?? Number(process.env.LEVEL1_BPS ?? 1000),
     level2Bps: (cfg as any)?.level2Bps ?? Number(process.env.LEVEL2_BPS ?? 500),
+    paymentNetwork: ((cfg as any)?.paymentNetwork as "EVM" | "TRON") ?? "EVM",
     chainId: cfg?.chainId ?? null,
     rpcUrl: cfg?.rpcUrl ?? process.env.NEXT_PUBLIC_RPC_URL ?? process.env.RPC_URL ?? null,
+    tronApiKey: (cfg as any)?.tronApiKey ?? process.env.TRON_API_KEY ?? null,
   };
 }
 

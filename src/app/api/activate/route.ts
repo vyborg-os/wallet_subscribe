@@ -27,44 +27,92 @@ export async function POST(req: Request) {
     const { label, amountUsd, amountEth, txHash } = parsed.data;
 
     const cfg = await getAppConfig();
-    const rpcUrl = cfg.rpcUrl;
     const platformAddress = cfg.treasuryAddress;
     const tokenAddress = cfg.tokenAddress;
     const tokenDecimals = cfg.tokenDecimals ?? 6;
-    if (!rpcUrl || !platformAddress || !tokenAddress) {
+    if (!platformAddress || !tokenAddress) {
       return NextResponse.json({ error: "Server not configured" }, { status: 500 });
     }
 
-    const publicClient = createPublicClient({ transport: http(rpcUrl) });
-
-    const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` }).catch(() => null);
-    if (!receipt || receipt.status !== "success") {
-      return NextResponse.json({ error: "Transaction not confirmed" }, { status: 400 });
-    }
-
-    // Verify ERC20 Transfer from user to treasury
-    const token = getAddress(tokenAddress as `0x${string}`);
-    const toTopic = addressTopic(getAddress(platformAddress as `0x${string}`));
     const me = await prisma.user.findUnique({ where: { id: userId }, select: { walletAddress: true } });
     if (!me?.walletAddress) return NextResponse.json({ error: "User wallet not set" }, { status: 400 });
-    const fromTopic = addressTopic(getAddress(me.walletAddress as `0x${string}`));
-    const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" as const;
-    const expected = toTokenUnits(amountEth, tokenDecimals);
-    const match = receipt.logs.find((log) => {
-      if (!log.address || log.address.toLowerCase() !== token.toLowerCase()) return false;
-      if (!log.topics || log.topics.length < 3) return false;
-      if ((log.topics[0] || '').toLowerCase() !== TRANSFER_TOPIC) return false;
-      const t1 = (log.topics[1] || '').toLowerCase();
-      const t2 = (log.topics[2] || '').toLowerCase();
-      if (t1 !== fromTopic.toLowerCase()) return false;
-      if (t2 !== toTopic.toLowerCase()) return false;
-      try {
-        const val = BigInt(log.data as `0x${string}`);
-        return val === expected;
-      } catch { return false; }
-    });
-    if (!match) {
-      return NextResponse.json({ error: "No matching token transfer to treasury found" }, { status: 400 });
+
+    if (cfg.paymentNetwork === "TRON") {
+      // TRON verification via TronGrid
+      const tronApiKey = cfg.tronApiKey;
+      const baseUrl = "https://api.trongrid.io";
+      const headers: Record<string, string> = {};
+      if (tronApiKey) {
+        headers["TRON-PRO-API-KEY"] = tronApiKey;
+      }
+
+      // Get transaction info
+      const txResponse = await fetch(`${baseUrl}/v1/transactions/${txHash}`, { headers }).catch(() => null);
+      if (!txResponse?.ok) {
+        return NextResponse.json({ error: "Transaction not found on TRON network" }, { status: 400 });
+      }
+      const txData = await txResponse.json();
+      
+      if (txData.ret?.[0]?.contractRet !== "SUCCESS") {
+        return NextResponse.json({ error: "Transaction failed on TRON network" }, { status: 400 });
+      }
+
+      // Get transaction events to verify TRC-20 transfer
+      const eventsResponse = await fetch(`${baseUrl}/v1/transactions/${txHash}/events`, { headers }).catch(() => null);
+      if (!eventsResponse?.ok) {
+        return NextResponse.json({ error: "Could not verify transaction events" }, { status: 400 });
+      }
+      const eventsData = await eventsResponse.json();
+
+      // Look for Transfer event
+      const expectedAmount = Math.round(Number(amountEth) * Math.pow(10, tokenDecimals));
+      const transferEvent = eventsData.data?.find((event: any) => 
+        event.event_name === "Transfer" &&
+        event.contract_address === tokenAddress &&
+        event.result?.from === me.walletAddress &&
+        event.result?.to === platformAddress &&
+        parseInt(event.result?.value || "0") === expectedAmount
+      );
+
+      if (!transferEvent) {
+        return NextResponse.json({ error: "No matching USDT transfer to treasury found" }, { status: 400 });
+      }
+    } else {
+      // EVM verification (existing logic)
+      const rpcUrl = cfg.rpcUrl;
+      if (!rpcUrl) {
+        return NextResponse.json({ error: "RPC URL not configured" }, { status: 500 });
+      }
+
+      const publicClient = createPublicClient({ transport: http(rpcUrl) });
+
+      const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` }).catch(() => null);
+      if (!receipt || receipt.status !== "success") {
+        return NextResponse.json({ error: "Transaction not confirmed" }, { status: 400 });
+      }
+
+      // Verify ERC20 Transfer from user to treasury
+      const token = getAddress(tokenAddress as `0x${string}`);
+      const toTopic = addressTopic(getAddress(platformAddress as `0x${string}`));
+      const fromTopic = addressTopic(getAddress(me.walletAddress as `0x${string}`));
+      const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" as const;
+      const expected = toTokenUnits(amountEth, tokenDecimals);
+      const match = receipt.logs.find((log) => {
+        if (!log.address || log.address.toLowerCase() !== token.toLowerCase()) return false;
+        if (!log.topics || log.topics.length < 3) return false;
+        if ((log.topics[0] || '').toLowerCase() !== TRANSFER_TOPIC) return false;
+        const t1 = (log.topics[1] || '').toLowerCase();
+        const t2 = (log.topics[2] || '').toLowerCase();
+        if (t1 !== fromTopic.toLowerCase()) return false;
+        if (t2 !== toTopic.toLowerCase()) return false;
+        try {
+          const val = BigInt(log.data as `0x${string}`);
+          return val === expected;
+        } catch { return false; }
+      });
+      if (!match) {
+        return NextResponse.json({ error: "No matching token transfer to treasury found" }, { status: 400 });
+      }
     }
 
     // Ensure a Plan exists for this independent package label (so dashboard lists it)

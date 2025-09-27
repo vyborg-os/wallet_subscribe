@@ -22,6 +22,8 @@ export default async function AdminSettingsPage() {
     ...cfg,
     level1Bps: (cfg as any)?.level1Bps ?? Number(process.env.LEVEL1_BPS ?? 1000),
     level2Bps: (cfg as any)?.level2Bps ?? Number(process.env.LEVEL2_BPS ?? 500),
+    paymentNetwork: ((cfg as any)?.paymentNetwork as "EVM" | "TRON") ?? "EVM",
+    tronApiKey: (cfg as any)?.tronApiKey ?? null,
   } as any;
 
   return (

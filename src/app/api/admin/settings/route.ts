@@ -14,8 +14,10 @@ const schema = z.object({
   currencySymbol: z.string().min(1).max(10).nullable().optional(),
   level1Bps: z.number().int().min(0).max(10000).nullable().optional(),
   level2Bps: z.number().int().min(0).max(10000).nullable().optional(),
+  paymentNetwork: z.enum(["EVM", "TRON"]).nullable().optional(),
   chainId: z.number().int().nullable().optional(),
   rpcUrl: z.string().url().nullable().optional(),
+  tronApiKey: z.string().min(1).nullable().optional(),
 });
 
 async function requireAdmin() {
@@ -54,8 +56,10 @@ export async function PATCH(req: Request) {
     treasuryAddress: raw.treasuryAddress ?? undefined,
     leaderboardAddress: raw.leaderboardAddress ?? undefined,
     tokenAddress: raw.tokenAddress ?? undefined,
+    paymentNetwork: raw.paymentNetwork ?? undefined,
     chainId: raw.chainId ?? undefined,
     rpcUrl: raw.rpcUrl ?? undefined,
+    tronApiKey: raw.tronApiKey ?? undefined,
   };
   if (raw.tokenDecimals !== null && raw.tokenDecimals !== undefined) data.tokenDecimals = raw.tokenDecimals;
   if (raw.currencySymbol !== null && raw.currencySymbol !== undefined) data.currencySymbol = raw.currencySymbol.toUpperCase();

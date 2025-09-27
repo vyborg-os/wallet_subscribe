@@ -1,11 +1,14 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import ActivateButton from "./activate-button";
+import TronActivateButton from "./tron-activate-button";
 
 export default function SimulateModal({ open, onClose, name, usd, l1, l2 }: { open: boolean; onClose: () => void; name: string; usd: number; l1: number; l2: number }) {
   const [qty, setQty] = useState(1);
+  const [paymentNetwork, setPaymentNetwork] = useState<"EVM" | "TRON">("EVM");
+  
   const totals = useMemo(() => {
     const totalUsd = usd * qty;
     return {
@@ -15,6 +18,16 @@ export default function SimulateModal({ open, onClose, name, usd, l1, l2 }: { op
       poolUsd: Math.round(totalUsd * 0.15 * 100) / 100, // optional 15% pool accrual visualization
     };
   }, [usd, l1, l2, qty]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/config", { cache: "no-store" });
+        const j = await r.json();
+        setPaymentNetwork(j?.config?.paymentNetwork ?? "EVM");
+      } catch {}
+    })();
+  }, []);
 
   if (!open) return null;
 
@@ -68,7 +81,11 @@ export default function SimulateModal({ open, onClose, name, usd, l1, l2 }: { op
 
         <div className="mt-5 grid sm:grid-cols-2 gap-3">
           <button className="btn-outline" onClick={onClose}>Close</button>
-          <ActivateButton label={`${name} x${qty}`} usd={usd * qty} />
+          {paymentNetwork === "TRON" ? (
+            <TronActivateButton label={`${name} x${qty}`} usd={usd * qty} />
+          ) : (
+            <ActivateButton label={`${name} x${qty}`} usd={usd * qty} />
+          )}
         </div>
       </div>
     </div>

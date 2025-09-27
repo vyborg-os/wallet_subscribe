@@ -19,6 +19,7 @@ export async function GET() {
         currencySymbol: cfg?.currencySymbol ?? "USDT",
         level1Bps: (cfg as any)?.level1Bps ?? fallbackL1,
         level2Bps: (cfg as any)?.level2Bps ?? fallbackL2,
+        paymentNetwork: ((cfg as any)?.paymentNetwork as "EVM" | "TRON") ?? "EVM",
         chainId: cfg?.chainId ?? null,
         rpcUrl: cfg?.rpcUrl ?? fallbackRpc,
       },
